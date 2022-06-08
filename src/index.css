@@ -1,0 +1,82 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+input.file-input {
+  display: none;
+}
+
+.fileContainer {
+  width: 400pt;
+  background-color: rgb(212, 208, 247);
+  margin: 10pt auto;
+  border-radius: 10pt;
+  padding: 5pt;
+}
+
+.fOption {
+  display: flex;
+  align-items: center;
+}
+
+.fOption {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fOption *,
+.fName {
+  text-align: center;
+}
+
+.fOption>*:not(.number) {
+  padding: 0 3pt;
+  width: 20pt;
+  height: 20pt;
+}
+
+.number {
+  display: flex;
+  border: black solid 1pt;
+  border-radius: 10pt;
+}
+
+.number>span {
+  padding: 0 3pt;
+}
+
+.logo {
+  width: 20pt;
+  height: 20pt;
+}
+
+/* .logo:hover {
+  background-color: red;
+  border-radius: 10pt;
+} */
+
+.header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #c7c7eb;
+  /* margin: 4pt; */
+  border-radius: 10pt;
+  width: 100pt;
+  margin: 3pt auto;
+}
+
+.header>* {
+  padding: 7pt;
+}
