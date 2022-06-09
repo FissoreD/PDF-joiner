@@ -40,16 +40,17 @@ input.file-input {
   text-align: center;
 }
 
-.fOption>*:not(.number) {
+/* .fOption>*:not(.number) {
   padding: 0 3pt;
   width: 20pt;
   height: 20pt;
-}
+} */
 
 .number {
   display: flex;
   border: black solid 1pt;
   border-radius: 10pt;
+  align-items: center;
 }
 
 .number>span {
@@ -61,10 +62,11 @@ input.file-input {
   height: 20pt;
 }
 
-/* .logo:hover {
+.logo:hover {
+  cursor: pointer;
   background-color: red;
   border-radius: 10pt;
-} */
+}
 
 .header {
   display: flex;
@@ -77,6 +79,6 @@ input.file-input {
   margin: 3pt auto;
 }
 
-.header>* {
+img {
   padding: 7pt;
 }

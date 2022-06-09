@@ -1,6 +1,7 @@
 import React from "react";
 import { MyBody } from "./BodyComponent";
 import { PDF } from "./PDFComponent";
+import { imgCreator } from "./Tools";
 
 export class Header {
   body: MyBody;
@@ -20,10 +21,12 @@ export class Header {
 
   async mergeSelected() {
     let pdfSelected = this.body.state.pdfList.filter(e => e.getSelected());
+    console.log(pdfSelected);
+
     if (pdfSelected.length > 0) {
-      let pdf = new PDF({ body: this.body, name: "merged" });
+      let pdf = await pdfSelected.splice(0, 1)[0].duplicate();
       for (const e of pdfSelected) {
-        pdf.duplicate(e);
+        await pdf.addAll(await e.duplicate());
       }
       return pdf;
     } else {
@@ -31,8 +34,8 @@ export class Header {
     }
   }
 
-  saveSelected() {
-    this.body.state.pdfList.forEach(async e => {
+  async saveSelected() {
+    this.body.state.pdfList.forEach(async (e) => {
       if (e.getSelected())
         await e.download();
     })
@@ -47,9 +50,12 @@ export class Header {
           {/* Ex. open file ext : accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" */}
           <input type="file" id="file-input" className="file-input" multiple accept=".pdf" onChange={() => this.loadPDF()}></input>
         </label>
-        <img src="img/merge.png" className="logo" alt="merge" onClick={async () => this.body.setPdfList({ add: await this.mergeSelected() })}></img>
+        {imgCreator({
+          action: async () => this.body.setPdfList({ add: await this.mergeSelected() }),
+          src: "img/merge.png"
+        })}
         {/* <div onClick={async () => this.body.setPdfList({ add: new PDF({ body: this.body }) })}>Create Blank page</div> */}
-        <img src="img/saveAll.png" className="logo" alt="saveAll" onClick={async () => this.saveSelected()}></img>
+        {imgCreator({ action: async () => this.saveSelected(), src: "img/saveAll.png" })}
       </div>
     );
   }

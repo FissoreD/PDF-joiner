@@ -2,8 +2,11 @@ import { PDFDocument } from "pdf-lib"
 import { MyBody } from "./BodyComponent";
 import download from "downloadjs";
 import React from "react";
+import { imgCreator } from "./Tools";
+import { Draggable } from "react-beautiful-dnd";
 
 export class PDF {
+  static id = 0;
   pdfDoc: Promise<PDFDocument>;
   pdfDataUri?: string;
   body: MyBody;
@@ -11,6 +14,7 @@ export class PDF {
   private selected: boolean;
   quantity: number;
   pdfDocOk?: PDFDocument;
+  id: number;
 
   constructor(param: { body: MyBody, name?: string }) {
     this.body = param.body;
@@ -19,6 +23,7 @@ export class PDF {
     this.pdfDoc.then(e => this.pdfDocOk = e);
     this.selected = false
     this.quantity = 1;
+    this.id = PDF.id++;
   }
 
   async addPage(a?: { pdf: PDF, pageNumber: number, pagePosition?: number }) {
@@ -115,16 +120,16 @@ export class PDF {
     return this.quantity;
   }
 
-  async duplicate(pdf?: PDF) {
+  async duplicate(a?: { pdf?: PDF, quantity?: number }) {
     let pdfCopy;
-    if (pdf) {
-      pdfCopy = pdf;
+    if (a?.pdf) {
+      pdfCopy = a.pdf;
     } else {
       let name = this.quantity > 1 ? this.fileNameRoot() + "-dupl.pdf" : this.fileName
       pdfCopy = new PDF({ body: this.body, name });
     }
 
-    for (let i = 0; i < this.quantity; i++) {
+    for (let i = 0; i < (a?.quantity || this.quantity); i++) {
       await pdfCopy.addAll(this)
     }
     return pdfCopy
@@ -147,56 +152,31 @@ export class PDF {
     );
   }
 
-  render() {
+  render(index: number) {
     return (
-      <div className="fPDF">
-        <div className="fOption">
-          <img className="logo" alt="blank" onClick={async () => this.body.setPdfList({ add: (await this.intervallWhitePage()) })} src="img/blank-page.jpg"></img>
-          <img className="logo" alt="download" onClick={() => this.download()} src="img/download.webp"></img>
-          {this.number()}
-          <img className="logo" alt="duplicate" onClick={async () => this.body.setPdfList({ add: (await this.duplicate()) })} src="img/duplicate.png"></img>
-          <input type="checkbox"
-            onClick={(evt) => this.isSelected((evt.target as HTMLInputElement).checked)}>
-          </input>
-          <img className="logo" alt="quit" onClick={() => this.body.setPdfList({ remove: this })} src="img/x.png"></img>
-          <img className="logo" alt="view" onClick={async () => this.viewer()} src="img/glasses.png"></img>
-          <img className="logo" alt="save" onClick={async () => this.download()} src="img/save.png"></img>
-        </div>
-        <div className="fName">{this.fileName} - #(Page) : {this.getPagesNumber()}</div>
-      </div>
+      <Draggable key={this.id} draggableId={this.id + ""} index={index}>
+        {(provided) => (
+          <div className="fPDF movable-item fileContainer pdfList" key={this.id} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} >
+            <div className="fOption">
+              {imgCreator({
+                action: async () => this.body.setPdfList({ add: (await this.intervallWhitePage()) }),
+                src: "img/blank-page.jpg"
+              })}
+              {this.number()}
+              {imgCreator({
+                action: async () => this.body.setPdfList({ add: (await this.duplicate()) }),
+                src: "img/duplicate.png"
+              })}
+              <input type="checkbox"
+                onClick={(evt) => this.isSelected((evt.target as HTMLInputElement).checked)}>
+              </input>
+              {imgCreator({ action: () => this.viewer(), src: "img/glasses.png" })}
+              {imgCreator({ action: () => this.download(), src: "img/save.png" })}
+              {imgCreator({ action: () => this.body.setPdfList({ remove: this }), src: "img/x.png" })}
+            </div>
+            <div className="fName">{this.fileName} - #(Page) : {this.getPagesNumber()}</div>
+          </div>)}
+      </Draggable>
     );
   }
-
-  // dragEvent(event: Event) {
-
-  //     // (1) prepare to moving: make absolute and on top by z-index
-  //     ball.style.position = 'absolute';
-  //     ball.style.zIndex = 1000;
-
-  //     // move it out of any current parents directly into body
-  //     // to make it positioned relative to the body
-  //     document.body.append(ball);
-
-  //     // centers the ball at (pageX, pageY) coordinates
-  //     function moveAt(pageX, pageY) {
-  //       ball.style.left = pageX - ball.offsetWidth / 2 + 'px';
-  //       ball.style.top = pageY - ball.offsetHeight / 2 + 'px';
-  //     }
-
-  //     // move our absolutely positioned ball under the pointer
-  //     moveAt(event.pageX, event.pageY);
-
-  //     function onMouseMove(event) {
-  //       moveAt(event.pageX, event.pageY);
-  //     }
-
-  //     // (2) move the ball on mousemove
-  //     document.addEventListener('mousemove', onMouseMove);
-
-  //     // (3) drop the ball, remove unneeded handlers
-  //     ball.onmouseup = function () {
-  //       document.removeEventListener('mousemove', onMouseMove);
-  //       ball.onmouseup = null;
-  //     };
-  // }
 }

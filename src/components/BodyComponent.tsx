@@ -2,6 +2,7 @@ import React from "react";
 import { Component, ReactNode } from "react";
 import { Header } from "./HeaderComponent";
 import { PDF } from "./PDFComponent";
+import { DragDropContext, Droppable, DropResult, ResponderProvided } from 'react-beautiful-dnd';
 
 export class MyBody extends Component<{}, { pdfList: PDF[], header: Header }> {
 
@@ -33,15 +34,34 @@ export class MyBody extends Component<{}, { pdfList: PDF[], header: Header }> {
   }
 
   render(): ReactNode {
+    const pdfList = this.state.pdfList;
+
+
+    let handleOnDragEnd = (result: DropResult, provided: ResponderProvided) => {
+      if (!result.destination) return;
+
+      const [reorderedItem] = pdfList.splice(result.source.index, 1);
+      pdfList.splice(result.destination.index, 0, reorderedItem);
+      this.setState({ pdfList });
+    }
+
     return (
       <>
         {this.state.header.render()}
-        {this.state.pdfList.map((e, pos) =>
-          <div key={pos} className="fileContainer">
-            {e.render()}
-            {/* <iframe title={pos + ""} src={e.pdfDataUri}></iframe> */}
-          </div>
-        )}
+        <DragDropContext onDragEnd={handleOnDragEnd}>
+          <Droppable droppableId="pdfList">
+            {(provided) => (
+              <div className="allPDFContainer" {...provided.droppableProps} ref={provided.innerRef}>
+                {this.state.pdfList.map((e, pos) =>
+                  // <div key={pos} className="fileContainer">
+                  e.render(pos)
+                  // </div>
+                )}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </>
     );
   }
