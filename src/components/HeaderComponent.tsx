@@ -21,8 +21,6 @@ export class Header {
 
   async mergeSelected() {
     let pdfSelected = this.body.state.pdfList.filter(e => e.getSelected());
-    console.log(pdfSelected);
-
     if (pdfSelected.length > 0) {
       let pdf = await pdfSelected.splice(0, 1)[0].duplicate();
       for (const e of pdfSelected) {
@@ -46,7 +44,7 @@ export class Header {
     return (
       <div className="header">
         <label>
-          <img src="img/open.png" alt="open" className="logo"></img>
+          <img data-tip="Open File" src="img/open.png" alt="open" className="logo"></img>
           {/* Ex. open file ext : accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" */}
           <input type="file" id="file-input" className="file-input" multiple accept=".pdf" onChange={() => this.loadPDF()}></input>
         </label>

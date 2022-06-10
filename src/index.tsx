@@ -1,12 +1,14 @@
 import { render } from 'react-dom';
 import React from 'react';
-import './index.css';
+import './css/index.css';
+import './css/spinner.css'
 import { MyBody } from './components/BodyComponent';
 import "./components/DropZone";
 
 render(
   <React.StrictMode>
     <MyBody />
+    <div className="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
   </React.StrictMode>,
   document.getElementById("root")
 );

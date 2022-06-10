@@ -4,6 +4,7 @@ import download from "downloadjs";
 import React from "react";
 import { imgCreator } from "./Tools";
 import { Draggable } from "react-beautiful-dnd";
+import ReactTooltip from "react-tooltip";
 
 export class PDF {
   static id = 0;
@@ -31,8 +32,7 @@ export class PDF {
       const [pageCopied] = await (await this.pdfDoc).copyPages(await a.pdf.pdfDoc!, [a.pageNumber])
       if (a.pagePosition) (await this.pdfDoc).insertPage(a.pagePosition, pageCopied)
       else (await this.pdfDoc).addPage(pageCopied)
-    }
-    else (await this.pdfDoc).addPage();
+    } else (await this.pdfDoc).addPage();
   }
 
   async addAll(pdf: PDF) {
@@ -85,8 +85,6 @@ export class PDF {
     (await this.pdfDoc!).saveAsBase64({ dataUri: true }).then(
       async e => {
         this.pdfDocOk = await this.pdfDoc!
-
-        // PdfDataUri is to put inside the src of the frame
         this.pdfDataUri = e;
         this.body.setPdfList({ add: this });
       });
@@ -111,8 +109,6 @@ export class PDF {
   modifyQuantity(val: number) {
     let pdfList = this.body.state.pdfList;
     this.quantity = Math.max(1, this.quantity + val)
-    console.log(this.quantity);
-
     this.body.setState({ pdfList })
   }
 
@@ -128,7 +124,6 @@ export class PDF {
       let name = this.quantity > 1 ? this.fileNameRoot() + "-dupl.pdf" : this.fileName
       pdfCopy = new PDF({ body: this.body, name });
     }
-
     for (let i = 0; i < (a?.quantity || this.quantity); i++) {
       await pdfCopy.addAll(this)
     }
@@ -152,31 +147,101 @@ export class PDF {
     );
   }
 
+  async splitter(str: string): Promise<PDF | undefined> {
+    let commandSplit = str.split(',')
+    let pdf = new PDF({ body: this.body, name: this.fileNameRoot() + "-split.pdf" });
+    try {
+      for (const commaSplit of commandSplit) {
+        let split = commaSplit.split("-").map(dashSplit => {
+          if (dashSplit === "") return -1;
+          let int = Number.parseInt(dashSplit)
+          if (isNaN(int)) {
+            throw new Error(`${commaSplit} is invalid : it should be on the form : INT-INT or INT`);
+          }
+          return int - 1;
+        })
+        if (split.length === 1) {
+          await pdf.addPage({ pdf: this, pageNumber: split[0] })
+        } else {
+          if (split[0] === -1) split[0] = 0;
+          if (split[1] === -1) split[1] = this.getPagesNumber() - 1;
+          for (let index = split[0]; index <= split[1]; index++) {
+            await pdf.addPage({ pdf: this, pageNumber: index })
+          }
+        }
+      }
+      return pdf;
+    } catch (e) {
+      if (e instanceof Error && e.message.startsWith("Invalid Integer")) {
+        alert(e.message)
+      }
+      console.log({ e });
+
+    }
+  }
+
+  splitterDiv() {
+    let splitterEvt = async (evt: React.KeyboardEvent<HTMLInputElement>) => {
+      if (evt.key === "Enter" || evt.key === "NumpadEnter") {
+        let splitCommaDot = (evt.target as HTMLInputElement).value.split(";")
+        for (const iterator of splitCommaDot) {
+          let add = await this.splitter(iterator)
+          await this.body.setPdfList({ add });
+        }
+      }
+    }
+
+    return (
+      <label htmlFor="pdfSplitter">
+        <span data-tip="Split PDF">Splitter</span>
+        <input type="text" id="" defaultValue={"1-" + this.getPagesNumber()} onKeyDown={splitterEvt} />
+      </label>
+    );
+  }
+
   render(index: number) {
     return (
-      <Draggable key={this.id} draggableId={this.id + ""} index={index}>
-        {(provided) => (
-          <div className="fPDF movable-item fileContainer pdfList" key={this.id} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} >
-            <div className="fOption">
-              {imgCreator({
-                action: async () => this.body.setPdfList({ add: (await this.intervallWhitePage()) }),
-                src: "img/blank-page.jpg"
-              })}
-              {this.number()}
-              {imgCreator({
-                action: async () => this.body.setPdfList({ add: (await this.duplicate()) }),
-                src: "img/duplicate.png"
-              })}
-              <input type="checkbox"
-                onClick={(evt) => this.isSelected((evt.target as HTMLInputElement).checked)}>
-              </input>
-              {imgCreator({ action: () => this.viewer(), src: "img/glasses.png" })}
-              {imgCreator({ action: () => this.download(), src: "img/save.png" })}
-              {imgCreator({ action: () => this.body.setPdfList({ remove: this }), src: "img/x.png" })}
-            </div>
-            <div className="fName">{this.fileName} - #(Page) : {this.getPagesNumber()}</div>
-          </div>)}
-      </Draggable>
+      <div id="mainPDF" key={this.id}>
+        <Draggable key={this.id} draggableId={this.id + ""} index={index}>
+          {(provided) => (
+            <div className="fPDF movable-item fileContainer pdfList" key={this.id} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} >
+              <div className="fOption">
+                {imgCreator({
+                  action: async () => this.body.setPdfList({ add: (await this.intervallWhitePage()) }),
+                  src: "img/blank-page.jpg",
+                  tooltip: "Interval with blank pages"
+                })}
+                {this.number()}
+                {imgCreator({
+                  action: async () => this.body.setPdfList({ add: (await this.duplicate()) }),
+                  src: "img/duplicate.png",
+                  tooltip: "Duplicate document"
+                })}
+                <input type="checkbox" data-tip="Select for merge"
+                  onClick={(evt) => this.isSelected((evt.target as HTMLInputElement).checked)}>
+                </input>
+                {imgCreator({
+                  action: () => this.viewer(),
+                  src: "img/glasses.png",
+                  tooltip: "Open in new page"
+                })}
+                {imgCreator({
+                  action: () => this.download(),
+                  src: "img/save.png",
+                  tooltip: "Save this pdf"
+                })}
+                {imgCreator({
+                  action: () => this.body.setPdfList({ remove: this }),
+                  src: "img/x.png",
+                  tooltip: "Remove this pdf"
+                })}
+                {this.splitterDiv()}
+              </div>
+              <div className="fName">{this.fileName} - #(Page) : {this.getPagesNumber()}</div>
+            </div>)}
+        </Draggable>
+        <ReactTooltip />
+      </div>
     );
   }
 }
