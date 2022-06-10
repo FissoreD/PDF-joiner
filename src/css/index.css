@@ -16,17 +16,33 @@ input.file-input {
   display: none;
 }
 
+.allPDFContainer {
+  width: 80%;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+
 .fileContainer {
-  width: 400pt;
+  width: 170pt;
+  height: 150pt;
   background-color: rgb(212, 208, 247);
-  margin: 10pt auto;
+  margin: 10pt;
   border-radius: 10pt;
   padding: 5pt;
+}
+
+.fileContainer.selected {
+  border: 2pt solid black;
 }
 
 .fOption {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .fOption {

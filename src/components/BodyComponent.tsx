@@ -1,9 +1,8 @@
-import React from "react";
-import { Component, ReactNode } from "react";
-import { Header } from "./HeaderComponent";
-import { PDF } from "./PDFComponent";
+import React, { Component, ReactNode } from "react";
 import { DragDropContext, Droppable, DropResult, ResponderProvided } from 'react-beautiful-dnd';
 import ReactTooltip from "react-tooltip";
+import { Header } from "./HeaderComponent";
+import { PDF } from "./PDFComponent";
 
 export class MyBody extends Component<{}, { pdfList: PDF[], header: Header }> {
 
@@ -11,7 +10,7 @@ export class MyBody extends Component<{}, { pdfList: PDF[], header: Header }> {
     super(props);
     this.state = {
       pdfList: [],
-      header: new Header(this),
+      header: new Header(this)
     }
   }
 

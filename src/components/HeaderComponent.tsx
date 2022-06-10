@@ -46,7 +46,8 @@ export class Header {
         <label>
           <img data-tip="Open File" src="img/open.png" alt="open" className="logo"></img>
           {/* Ex. open file ext : accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" */}
-          <input type="file" id="file-input" className="file-input" multiple accept=".pdf" onChange={() => this.loadPDF()}></input>
+          <input type="file" id="file-input" className="file-input" multiple accept=".pdf"
+            onChange={() => this.loadPDF()}></input>
         </label>
         {imgCreator({
           action: async () => this.body.setPdfList({ add: await this.mergeSelected() }),
