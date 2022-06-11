@@ -1,8 +1,6 @@
 import download from "downloadjs";
 import { PDFDocument } from "pdf-lib";
 import React, { ChangeEvent } from "react";
-import { Draggable } from "react-beautiful-dnd";
-import ReactTooltip from "react-tooltip";
 import { MyBody } from "./BodyComponent";
 import { imgCreator, loadingSpinner } from "./Tools";
 
@@ -18,7 +16,7 @@ export class PDF {
   id: number;
   isLoading = true;
 
-  constructor(param: { body: MyBody, name?: string }) {
+  constructor(param: { body: MyBody, name?: string, toAdd?: boolean }) {
     this.body = param.body;
     this.fileName = param.name || "blank.pdf";
     this.pdfDoc = PDFDocument.create()
@@ -26,7 +24,8 @@ export class PDF {
     this.selected = false
     this.quantity = 1;
     this.id = ++PDF.id;
-    this.body.setPdfList({ add: this });
+    if (param.toAdd || param.toAdd === undefined)
+      this.body.setPdfList({ add: this });
   }
 
   async addPage(a?: { pdf: PDF, pageNumber: number, pagePosition?: number }) {
@@ -100,27 +99,23 @@ export class PDF {
     return this.selected
   }
 
-  modifyQuantity(val: number) {
-    // TODO : Use ref instead to update pdfList
-    this.quantity = Math.max(1, this.quantity + val)
-    this.body.forceUpdate()
-  }
-
   getQuantity() {
     return this.quantity;
   }
 
-  async duplicate(a?: { pdf?: PDF, quantity?: number }) {
+  async duplicate(a?: { pdf?: PDF, quantity?: number }, toAdd?: boolean) {
     let pdfCopy;
     if (a?.pdf) {
       pdfCopy = a.pdf;
     } else {
       let name = this.quantity > 1 ? this.fileNameRoot() + "-dupl.pdf" : this.fileName
-      pdfCopy = new PDF({ body: this.body, name });
+      pdfCopy = new PDF({ body: this.body, name, toAdd });
     }
     for (let i = 0; i < (a?.quantity || this.quantity); i++) {
       await pdfCopy.addAll(this)
     }
+    console.log("Going to update !");
+
     await pdfCopy.updateFrameConetent()
     return pdfCopy
   }
@@ -132,13 +127,32 @@ export class PDF {
     window.open(URL.createObjectURL(blob), "_blank")
   }
 
-  number() {
+  duplicateDiv() {
+    const duplicateEvt = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key.includes("Enter")) {
+        let val = e.currentTarget.value
+        let int = parseInt(val)
+        if (val === "" || int === 0) return
+        this.quantity = int;
+        this.duplicate()
+      }
+    }
+
+    const duplicateSpell = (e: ChangeEvent<HTMLInputElement>) => {
+      let val = e.currentTarget.value;
+      let regex = /^[0-9]*$/g;
+      if (val.match(regex) === null) {
+        e.currentTarget.value = val.substring(0, val.length - 1);
+      }
+    }
+
+
     return (
-      <div className="number">
-        <img className="logo" alt="minus" onClick={() => this.modifyQuantity(-1)} src="img/minus.png"></img>
-        <span>{this.quantity}</span>
-        <img className="logo" alt="plus" onClick={() => this.modifyQuantity(1)} src="img/plus.png"></img>
-      </div>
+      <label className="txtInp">
+        <span data-tip="Split PDF">Duplicate</span>
+        <input type="text" id="" defaultValue={"1"}
+          onKeyDown={duplicateEvt} onChange={duplicateSpell} />
+      </label>
     );
   }
 
@@ -205,7 +219,7 @@ export class PDF {
       }
     }
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const spellChecker = (e: ChangeEvent<HTMLInputElement>) => {
       let val = e.currentTarget.value;
       let regex = /^(([0-9]*(-[0-9]*)?)[,;])*([0-9]*(-[0-9]*)?)$/g;
       if (val.match(regex) === null) {
@@ -214,10 +228,10 @@ export class PDF {
     };
 
     return (
-      <label htmlFor="pdfSplitter">
+      <label className="txtInp">
         <span data-tip="Split PDF">Splitter</span>
-        <input type="text" id="" defaultValue={"1-" + this.getPagesNumber()}
-          onKeyDown={splitterEvt} onChange={handleChange} />
+        <input type="text" id="" defaultValue={`1-${this.getPagesNumber()}`}
+          onKeyDown={splitterEvt} onChange={spellChecker} />
       </label>
     );
   }
@@ -229,58 +243,44 @@ export class PDF {
         this.pdfDocOk = await this.pdfDoc!
         this.pdfDataUri = e;
         this.body.forceUpdate()
-      });
+      })
   }
 
-  render(index: number) {
-    console.log("HERE");
-
-    return (
-      <Draggable key={this.id} draggableId={this.id + ""} index={index}>
-        {(provided) => (
-          <div className="movable-item fileContainer pdfList" key={this.id}
-            ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} >
-            {this.isLoading ? loadingSpinner() :
-              <>
-                <div className="fOption">
-                  {imgCreator({
-                    action: async () => await this.intervallWhitePage(),
-                    src: "img/blank-page.jpg",
-                    tooltip: "Interval with blank pages"
-                  })}
-                  {imgCreator({
-                    action: () => this.viewer(),
-                    src: "img/glasses.png",
-                    tooltip: "Open in new page"
-                  })}
-                  {imgCreator({
-                    action: () => this.download(),
-                    src: "img/save.png",
-                    tooltip: "Save this pdf"
-                  })}
-                  {imgCreator({
-                    action: () => this.body.setPdfList({ remove: this }),
-                    src: "img/x.png",
-                    tooltip: "Remove this pdf"
-                  })}
-                  {imgCreator({
-                    action: async () => await this.duplicate(),
-                    src: "img/duplicate.png",
-                    tooltip: "Duplicate document"
-                  })}
-                  <input type="checkbox" data-tip="Select for merge"
-                    onClick={(evt) => this.isSelected((evt.target as HTMLInputElement).checked)}>
-                  </input>
-                  {this.number()}
-                  {this.splitterDiv()}
-                </div>
-                <div className="fName">{this.fileName} - #(Page): {this.getPagesNumber()}  </div>
-                <ReactTooltip />
-              </>
-            }
-          </div>)
-        }
-      </Draggable>
-    );
+  render(_index?: number) {
+    return <div className="fileContainer">
+      {
+        this.isLoading ? loadingSpinner() :
+          <>
+            <div className="fOption">
+              {imgCreator({
+                action: async () => await this.intervallWhitePage(),
+                src: "img/interval.png",
+                tooltip: "Interval with blank pages"
+              })}
+              {imgCreator({
+                action: () => this.viewer(),
+                src: "img/glasses.png",
+                tooltip: "Open in new page"
+              })}
+              {imgCreator({
+                action: () => this.download(),
+                src: "img/save.png",
+                tooltip: "Save this pdf"
+              })}
+              {imgCreator({
+                action: () => this.body.setPdfList({ remove: this }),
+                src: "img/x.png",
+                tooltip: "Remove this pdf"
+              })}
+              <input type="checkbox" data-tip="Select for merge"
+                onClick={(evt) => this.isSelected((evt.target as HTMLInputElement).checked)}>
+              </input>
+            </div>
+            {this.duplicateDiv()}
+            {this.splitterDiv()}
+            <div className="fName">{this.fileName} - #(Page): {this.getPagesNumber()}  </div>
+          </>
+      }
+    </div>
   }
 }

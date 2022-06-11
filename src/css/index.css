@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-align: center;
 }
 
 code {
@@ -27,12 +28,17 @@ input.file-input {
 }
 
 .fileContainer {
-  width: 170pt;
-  height: 150pt;
+  width: 230px;
+  height: 200px;
   background-color: rgb(212, 208, 247);
   margin: 10pt;
   border-radius: 10pt;
-  padding: 5pt;
+  padding: 10pt;
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
 }
 
 .fileContainer.selected {
@@ -43,12 +49,7 @@ input.file-input {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.fOption {
-  display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 .fOption *,
@@ -85,16 +86,38 @@ input.file-input {
 }
 
 .header {
-  display: flex;
+  display: inline-flex;
   justify-content: center;
   align-items: center;
   background-color: #c7c7eb;
   /* margin: 4pt; */
   border-radius: 10pt;
-  width: 100pt;
   margin: 3pt auto;
+  margin-top: 15pt;
 }
 
 img {
   padding: 7pt;
+}
+
+.txtInp {
+  display: inline-flex;
+  width: 80%;
+}
+
+.txtInp span {
+  width: 50%;
+  text-align: initial;
+}
+
+.txtInp input {
+  width: 50%;
+  text-align: center;
+}
+
+.grid-item {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
 }

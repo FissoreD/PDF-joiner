@@ -24,8 +24,9 @@ export class Header {
     if (pdfSelected.length > 0) {
       let pdf = await pdfSelected.splice(0, 1)[0].duplicate();
       for (const e of pdfSelected) {
-        await pdf.addAll(await e.duplicate());
+        await pdf.addAll(await e.duplicate({}, false));
       }
+      await pdf.updateFrameConetent()
       return pdf;
     } else {
       alert("No PDF to merge");
@@ -39,8 +40,13 @@ export class Header {
     })
   }
 
-  render() {
+  async creteBlankPage() {
+    let pdf = new PDF({ body: this.body })
+    await pdf.addPage()
+    pdf.updateFrameConetent()
+  }
 
+  render() {
     return (
       <div className="header">
         <label>
@@ -50,11 +56,18 @@ export class Header {
             onChange={() => this.loadPDF()}></input>
         </label>
         {imgCreator({
-          action: async () => this.body.setPdfList({ add: await this.mergeSelected() }),
-          src: "img/merge.png"
+          action: async () => await this.mergeSelected(),
+          src: "img/merge.png",
+          tooltip: "Merge Selected"
         })}
-        {/* <div onClick={async () => this.body.setPdfList({ add: new PDF({ body: this.body }) })}>Create Blank page</div> */}
-        {imgCreator({ action: async () => this.saveSelected(), src: "img/saveAll.png" })}
+        {imgCreator({
+          action: async () => this.creteBlankPage(), src: "img/blankPage.png",
+          tooltip: "Create Blank PDF"
+        })}
+        {imgCreator({
+          action: async () => this.saveSelected(), src: "img/saveAll.png",
+          tooltip: "Save Selected"
+        })}
       </div>
     );
   }
