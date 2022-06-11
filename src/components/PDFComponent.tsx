@@ -1,6 +1,7 @@
 import download from "downloadjs";
 import { PDFDocument } from "pdf-lib";
 import React, { ChangeEvent } from "react";
+import ReactSwitch from "react-switch";
 import { MyBody } from "./BodyComponent";
 import { imgCreator, loadingSpinner } from "./Tools";
 
@@ -10,22 +11,24 @@ export class PDF {
   pdfDataUri?: string;
   body: MyBody;
   fileName?: string;
-  private selected: boolean;
+  private checked: boolean;
   quantity: number;
   pdfDocOk?: PDFDocument;
   id: number;
   isLoading = true;
+  splitterString: string;
 
   constructor(param: { body: MyBody, name?: string, toAdd?: boolean }) {
     this.body = param.body;
     this.fileName = param.name || "blank.pdf";
     this.pdfDoc = PDFDocument.create()
     this.pdfDoc.then(e => this.pdfDocOk = e);
-    this.selected = false
+    this.checked = false
     this.quantity = 1;
     this.id = ++PDF.id;
     if (param.toAdd || param.toAdd === undefined)
       this.body.setPdfList({ add: this });
+    this.splitterString = ""
   }
 
   async addPage(a?: { pdf: PDF, pageNumber: number, pagePosition?: number }) {
@@ -79,24 +82,25 @@ export class PDF {
       await (await this.pdfDoc).save();
       await this.updateFrameConetent();
     }).catch(function (err) {
-      console.log('Error in PDF opening ! ', err);
+      console.error('Error in PDF opening ! ', err);
     });
   }
 
   getPagesNumber() {
-    return this.pdfDocOk!.getPages().length
+    return this.pdfDocOk!.getPageCount()
   }
 
   fileNameRoot() {
     return this.fileName?.substring(0, this.fileName.length - 4)
   }
 
-  isSelected(b: boolean) {
-    this.selected = b;
+  isChecked(b: boolean) {
+    this.checked = b;
+    this.body.forceUpdate()
   }
 
   getSelected() {
-    return this.selected
+    return this.checked
   }
 
   getQuantity() {
@@ -108,14 +112,12 @@ export class PDF {
     if (a?.pdf) {
       pdfCopy = a.pdf;
     } else {
-      let name = this.quantity > 1 ? this.fileNameRoot() + "-dupl.pdf" : this.fileName
+      let name = this.quantity > 0 ? this.fileNameRoot() + "-dupl.pdf" : this.fileName
       pdfCopy = new PDF({ body: this.body, name, toAdd });
     }
     for (let i = 0; i < (a?.quantity || this.quantity); i++) {
       await pdfCopy.addAll(this)
     }
-    console.log("Going to update !");
-
     await pdfCopy.updateFrameConetent()
     return pdfCopy
   }
@@ -129,13 +131,7 @@ export class PDF {
 
   duplicateDiv() {
     const duplicateEvt = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key.includes("Enter")) {
-        let val = e.currentTarget.value
-        let int = parseInt(val)
-        if (val === "" || int === 0) return
-        this.quantity = int;
-        this.duplicate()
-      }
+      if (e.key.includes("Enter")) this.duplicate()
     }
 
     const duplicateSpell = (e: ChangeEvent<HTMLInputElement>) => {
@@ -143,51 +139,65 @@ export class PDF {
       let regex = /^[0-9]*$/g;
       if (val.match(regex) === null) {
         e.currentTarget.value = val.substring(0, val.length - 1);
+      } else {
+        let int = parseInt(val)
+        if (val === "" || int === 0) return
+        this.quantity = int;
       }
     }
-
+    let inp =
+      <input type="text" id="" defaultValue={"1"}
+        onKeyDown={duplicateEvt} onChange={duplicateSpell} />
 
     return (
       <label className="txtInp">
         <span data-tip="Split PDF">Duplicate</span>
-        <input type="text" id="" defaultValue={"1"}
-          onKeyDown={duplicateEvt} onChange={duplicateSpell} />
+        {inp}
+        {imgCreator({ src: "img/ok.png", action: () => { this.duplicate() }, isSendIcon: true })}
       </label>
     );
   }
 
-  async splitter(str: string): Promise<PDF | undefined> {
-    let commandSplit = str.split(',')
-    let pdf = new PDF({ body: this.body, name: this.fileNameRoot() + "-split.pdf" });
-    try {
-      for (const commaSplit of commandSplit) {
-        let split = commaSplit.split("-").map(dashSplit => {
-          if (dashSplit === "") return -1;
-          let int = Number.parseInt(dashSplit)
-          if (isNaN(int)) {
-            throw new Error(`${commaSplit} is invalid : it should be on the form : INT-INT or INT`);
-          }
-          return int - 1;
-        })
-        if (split[0] > this.getPagesNumber()) break;
-        if (split.length === 1) {
-          await pdf.addPage({ pdf: this, pageNumber: split[0] })
-        } else {
-          if (split[1] >= this.getPagesNumber()) split[1] = this.getPagesNumber() - 1;
-          if (split[0] === -1) split[0] = 0;
-          if (split[1] === -1) split[1] = this.getPagesNumber() - 1;
-          if (split[0] > split[1]) break;
-          for (let index = split[0]; index <= split[1]; index++) {
-            await pdf.addPage({ pdf: this, pageNumber: index })
+  async splitter(): Promise<PDF[] | undefined> {
+    if (this.splitterString.length == 0) return
+    let semicolonSplit = this.splitterString.split(";")
+    let pdfs: PDF[] = []
+    for (const str of semicolonSplit) {
+      let comma = str.split(',')
+      if (comma.length == 0) continue
+      let pdf = new PDF({ body: this.body, name: this.fileNameRoot() + "-split.pdf" });
+      try {
+        for (const commaSplit of comma) {
+          let split = commaSplit.split("-").map(dashSplit => {
+            if (dashSplit === "") return -1;
+            let int = Number.parseInt(dashSplit)
+            if (isNaN(int)) {
+              throw new Error(`${commaSplit} is invalid : it should be on the form : INT-INT or INT`);
+            }
+            return int - 1;
+          })
+          if (split[0] > this.getPagesNumber()) break;
+          if (split.length === 1) {
+            await pdf.addPage({ pdf: this, pageNumber: split[0] })
+          } else {
+            if (split[1] >= this.getPagesNumber()) split[1] = this.getPagesNumber() - 1;
+            if (split[0] === -1) split[0] = 0;
+            if (split[1] === -1) split[1] = this.getPagesNumber() - 1;
+            if (split[0] > split[1]) break;
+            for (let index = split[0]; index <= split[1]; index++) {
+              await pdf.addPage({ pdf: this, pageNumber: index })
+            }
           }
         }
-      }
-      return pdf;
-    } catch (e) {
-      if (e instanceof Error && e.message.startsWith("Invalid Integer")) {
-        alert(e.message)
+        pdfs.push(pdf)
+      } catch (e) {
+        if (e instanceof Error && e.message.startsWith("Invalid Integer")) {
+          alert(e.message)
+        }
       }
     }
+    pdfs.forEach(async e => await e.updateFrameConetent())
+    return pdfs;
   }
 
   splitterDiv() {
@@ -206,16 +216,14 @@ export class PDF {
         }
         return res[0]
       }).filter(e => e !== "").join(",")).join(";")
+      this.splitterString = dash;
       return dash
     }
 
     let splitterEvt = async (evt: React.KeyboardEvent<HTMLInputElement>) => {
       if (evt.key === "Enter" || evt.key === "NumpadEnter") {
         evt.currentTarget.value = clearInput(evt);
-        let splitCommaDot = (evt.target as HTMLInputElement).value.split(";")
-        for (const iterator of splitCommaDot) {
-          (await this.splitter(iterator))?.updateFrameConetent()
-        }
+        this.splitter()
       }
     }
 
@@ -224,14 +232,18 @@ export class PDF {
       let regex = /^(([0-9]*(-[0-9]*)?)[,;])*([0-9]*(-[0-9]*)?)$/g;
       if (val.match(regex) === null) {
         e.currentTarget.value = val.substring(0, val.length - 1);
+      } else {
+        this.splitterString = e.currentTarget.value
       }
     };
+    this.splitterString = `1-${this.getPagesNumber()}`;
 
     return (
       <label className="txtInp">
         <span data-tip="Split PDF">Splitter</span>
-        <input type="text" id="" defaultValue={`1-${this.getPagesNumber()}`}
+        <input type="text" id="" defaultValue={this.splitterString}
           onKeyDown={splitterEvt} onChange={spellChecker} />
+        {imgCreator({ src: "img/ok.png", action: () => { this.splitter() }, isSendIcon: true })}
       </label>
     );
   }
@@ -272,13 +284,14 @@ export class PDF {
                 src: "img/x.png",
                 tooltip: "Remove this pdf"
               })}
-              <input type="checkbox" data-tip="Select for merge"
-                onClick={(evt) => this.isSelected((evt.target as HTMLInputElement).checked)}>
-              </input>
             </div>
+            <label className="txtInp">
+              <span>Checked</span>
+              <ReactSwitch onChange={(evt) => this.isChecked(evt)} checked={this.checked} />
+            </label>
             {this.duplicateDiv()}
             {this.splitterDiv()}
-            <div className="fName">{this.fileName} - #(Page): {this.getPagesNumber()}  </div>
+            <div className="fName">{this.fileName} <br /> #(Page): {this.getPagesNumber()}  </div>
           </>
       }
     </div>

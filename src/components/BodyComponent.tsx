@@ -43,11 +43,7 @@ export class MyBody extends Component<{}, { pdfList: PDF[], header: Header, item
       this.setState({ pdfList: nextState });
     }
 
-    window.onkeydown = (evt) => {
-      let newIt = this.state.items;
-      newIt.push({ id: this.state.items.length + 1, n: "aa" })
-      this.setState({ items: newIt })
-    }
+    console.log("RENDERING");
 
     return (
       <>

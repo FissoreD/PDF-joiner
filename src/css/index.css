@@ -33,7 +33,7 @@ input.file-input {
   background-color: rgb(212, 208, 247);
   margin: 10pt;
   border-radius: 10pt;
-  padding: 10pt;
+  padding: 2pt;
   display: flex;
   box-sizing: border-box;
   flex-direction: column;
@@ -55,6 +55,8 @@ input.file-input {
 .fOption *,
 .fName {
   text-align: center;
+  word-wrap: break-word;
+  max-width: 100%;
 }
 
 /* .fOption>*:not(.number) {
@@ -120,4 +122,11 @@ img {
   height: 100%;
   display: flex;
   justify-content: center;
+}
+
+.send-icon {
+  height: 10pt;
+  padding: 3pt;
+  width: 10pt;
+  align-self: center;
 }
