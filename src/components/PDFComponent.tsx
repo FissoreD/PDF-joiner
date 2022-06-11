@@ -159,12 +159,12 @@ export class PDF {
   }
 
   async splitter(): Promise<PDF[] | undefined> {
-    if (this.splitterString.length == 0) return
+    if (this.splitterString.length === 0) return
     let semicolonSplit = this.splitterString.split(";")
     let pdfs: PDF[] = []
     for (const str of semicolonSplit) {
       let comma = str.split(',')
-      if (comma.length == 0) continue
+      if (comma.length === 0) continue
       let pdf = new PDF({ body: this.body, name: this.fileNameRoot() + "-split.pdf" });
       try {
         for (const commaSplit of comma) {
@@ -233,15 +233,14 @@ export class PDF {
       if (val.match(regex) === null) {
         e.currentTarget.value = val.substring(0, val.length - 1);
       } else {
-        this.splitterString = e.currentTarget.value
+        this.splitterString = val
       }
-    };
-    this.splitterString = `1-${this.getPagesNumber()}`;
+    }
 
     return (
       <label className="txtInp">
         <span data-tip="Split PDF">Splitter</span>
-        <input type="text" id="" defaultValue={this.splitterString}
+        <input type="text" id="" value={this.splitterString}
           onKeyDown={splitterEvt} onChange={spellChecker} />
         {imgCreator({ src: "img/ok.png", action: () => { this.splitter() }, isSendIcon: true })}
       </label>
@@ -254,6 +253,7 @@ export class PDF {
       async e => {
         this.pdfDocOk = await this.pdfDoc!
         this.pdfDataUri = e;
+        this.splitterString = `1-${this.getPagesNumber()}`;
         this.body.forceUpdate()
       })
   }

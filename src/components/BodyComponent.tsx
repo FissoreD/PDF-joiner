@@ -43,8 +43,6 @@ export class MyBody extends Component<{}, { pdfList: PDF[], header: Header, item
       this.setState({ pdfList: nextState });
     }
 
-    console.log("RENDERING");
-
     return (
       <>
         {this.state.header.render()}
