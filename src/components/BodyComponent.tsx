@@ -38,34 +38,39 @@ export class MyBody extends Component<{}, { pdfList: PDF[], header: Header, item
   }
 
   render(): ReactNode {
+    let pdfList = this.state.pdfList;
     let onChange = (_sourceId: string, sourceIndex: number, targetIndex: number, _targetId?: string | undefined) => {
       const nextState = swap(this.state.pdfList, sourceIndex, targetIndex);
       this.setState({ pdfList: nextState });
+      pdfList = nextState
     }
+
+    let boxesPerRow = 4
 
     return (
       <>
         {this.state.header.render()}
         <div className="App">
-          <GridContextProvider onChange={onChange}>
-            <GridDropZone
-              id="items"
-              boxesPerRow={3}
-              rowHeight={230}
-              style={{ height: `${230 * (Math.floor(this.state.pdfList.length / 3) + 1)}px`, width: "800px", margin: "auto" }}
-            >
-              {this.state.pdfList.map((item) => (
-                <GridItem key={item.id}>
-                  <div className="grid-item">
-                    {item.render()}
-                  </div>
-                </GridItem>
-              ))}
-              <ReactTooltip />
-            </GridDropZone>
-          </GridContextProvider>
-          {/* <ReactTooltip /> */}
+          {pdfList.length === 0 ? <></> :
+            <GridContextProvider onChange={onChange}>
+              <GridDropZone
+                id="items"
+                boxesPerRow={boxesPerRow}
+                rowHeight={220}
+                style={{ height: `${230 * (Math.floor(pdfList.length / 3) + 1)}px`, width: (boxesPerRow * 210) + "px", margin: "10pt auto" }}
+              >
+                {pdfList.map((item) => (
+                  <GridItem key={item.id}>
+                    <div className="grid-item">
+                      {item.render()}
+                    </div>
+                  </GridItem>
+                ))}
+              </GridDropZone>
+            </GridContextProvider>
+          }
         </div>
+        <ReactTooltip />
       </>
     );
   }

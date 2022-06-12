@@ -259,7 +259,7 @@ export class PDF {
   }
 
   render(_index?: number) {
-    return <div className="fileContainer">
+    return <div className={"fileContainer " + (this.isLoading ? "loadingBar" : "")}>
       {
         this.isLoading ? loadingSpinner() :
           <>

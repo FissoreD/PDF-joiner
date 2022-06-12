@@ -53,7 +53,9 @@ export class Header {
           <img data-tip="Open File" src="img/open.png" alt="open" className="logo"></img>
           {/* Ex. open file ext : accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" */}
           <input type="file" id="file-input" className="file-input" multiple accept=".pdf"
-            onChange={() => this.loadPDF()}></input>
+            onChange={() => this.loadPDF()} onClick={(event) => {
+              event.currentTarget.value = ""
+            }}></input>
         </label>
         {imgCreator({
           action: async () => await this.mergeSelected(),
@@ -67,6 +69,10 @@ export class Header {
         {imgCreator({
           action: async () => this.saveSelected(), src: "img/saveAll.png",
           tooltip: "Save Selected"
+        })}
+        {imgCreator({
+          action: async () => this.body.setState({ pdfList: [] }), src: "img/forbidden.png",
+          tooltip: "Close All"
         })}
       </div>
     );
