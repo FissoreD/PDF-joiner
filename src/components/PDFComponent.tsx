@@ -23,7 +23,7 @@ export class PDF {
     this.fileName = param.name || "blank.pdf";
     this.pdfDoc = PDFDocument.create()
     this.pdfDoc.then(e => this.pdfDocOk = e);
-    this.checked = false
+    this.checked = true
     this.quantity = 1;
     this.id = ++PDF.id;
     if (param.toAdd || param.toAdd === undefined)
@@ -94,12 +94,12 @@ export class PDF {
     return this.fileName?.substring(0, this.fileName.length - 4)
   }
 
-  isChecked(b: boolean) {
+  setChecked(b: boolean, update = true) {
     this.checked = b;
-    this.body.forceUpdate()
+    if (update) this.body.forceUpdate()
   }
 
-  getSelected() {
+  getChecked() {
     return this.checked
   }
 
@@ -287,7 +287,7 @@ export class PDF {
             </div>
             <label className="txtInp">
               <span>Checked</span>
-              <ReactSwitch onChange={(evt) => this.isChecked(evt)} checked={this.checked} />
+              <ReactSwitch onChange={(evt) => this.setChecked(evt)} checked={this.checked} />
             </label>
             {this.duplicateDiv()}
             {this.splitterDiv()}

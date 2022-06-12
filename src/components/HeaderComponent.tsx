@@ -20,11 +20,12 @@ export class Header {
   }
 
   async mergeSelected() {
-    let pdfSelected = this.body.state.pdfList.filter(e => e.getSelected());
+    let pdfSelected = this.body.state.pdfList.filter(e => e.getChecked());
     if (pdfSelected.length > 0) {
-      let pdf = await pdfSelected.splice(0, 1)[0].duplicate();
+      let pdf = new PDF({ body: this.body, name: "merge.pdf" });
       for (const e of pdfSelected) {
         await pdf.addAll(await e.duplicate({}, false));
+        e.setChecked(false, false)
       }
       await pdf.updateFrameConetent()
       return pdf;
@@ -35,9 +36,12 @@ export class Header {
 
   async saveSelected() {
     this.body.state.pdfList.forEach(async (e) => {
-      if (e.getSelected())
+      if (e.getChecked()) {
         await e.download();
+        e.setChecked(false, false)
+      }
     })
+    this.body.forceUpdate()
   }
 
   async creteBlankPage() {
