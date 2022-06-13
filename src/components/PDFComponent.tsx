@@ -235,6 +235,7 @@ export class PDF {
       } else {
         this.splitterString = val
       }
+      this.body.forceUpdate()
     }
 
     return (
