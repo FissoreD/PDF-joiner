@@ -1,5 +1,5 @@
 import download from "downloadjs";
-import { PDFDocument } from "pdf-lib";
+import { degrees, PDFDocument } from "pdf-lib";
 import React, { ChangeEvent } from "react";
 import ReactSwitch from "react-switch";
 import { MyBody } from "./BodyComponent";
@@ -17,6 +17,12 @@ export class PDF {
   id: number;
   isLoading = true;
   splitterString: string;
+
+  static readonly a4Size = {
+    width: 595.28,
+    height: 841.89,
+    ratio: 595.28 / 841.89
+  }
 
   constructor(param: { body: MyBody, name?: string, toAdd?: boolean }) {
     this.body = param.body;
@@ -81,8 +87,24 @@ export class PDF {
       this.pdfDoc = PDFDocument.load(data as string, { ignoreEncryption: true })
       await (await this.pdfDoc).save();
       await this.updateFrameConetent();
+      (await this.pdfDoc).getPages().forEach(page => {
+        let { width, height } = page.getSize();
+
+        let [widthR, heightR] =
+          [PDF.a4Size.width / Math.min(width, height),
+          PDF.a4Size.height / Math.max(width, height)]
+        if (width > height) {
+          page.setRotation(degrees(90));
+          page.setSize(PDF.a4Size.height, PDF.a4Size.width)
+          page.scaleContent(widthR, widthR)
+        } else {
+          page.setSize(PDF.a4Size.width, PDF.a4Size.height)
+          page.scaleContent(heightR, heightR)
+        }
+      });
     }).catch(function (err) {
       console.error('Error in PDF opening ! ', err);
+      alert('Error in PDF opening !');
     });
   }
 
@@ -208,7 +230,7 @@ export class PDF {
       let comma = semicolon.map(e => e.split(",").filter(e => e !== ""))
       let dash = comma.map(e => e.map(e => {
         let res = e.split("-");
-        if (parseInt(res[0]) >= pageNumber) return "";
+        if (parseInt(res[0]) > pageNumber) return "";
         if (res.length === 2) {
           if (res[0] === "") res[0] = "1"
           if (res[1] === "" || parseInt(res[1]) >= pageNumber) res[1] = pageNumber + "";
